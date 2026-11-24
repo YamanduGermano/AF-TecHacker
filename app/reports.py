@@ -9,6 +9,22 @@ def filled(value):
     return str(value).strip() if value and str(value).strip() else "**PENDENTE**"
 
 
+def chat_transcript(s):
+    """Export the same conversation + execution flow visible in the chat."""
+    items = list(s["chat"])
+    proposals = {p["id"]: p for p in s["proposals"]}
+    for event in s["events"]:
+        entry = {**event, "role": "activity", "content": event["message"]}
+        if event.get("proposal_id") in proposals:
+            entry["proposal"] = proposals[event["proposal_id"]]
+        items.append(entry)
+    recorded = {e.get("proposal_id") for e in s["events"] if e["kind"] == "proposal"}
+    for p in s["proposals"]:
+        if p["id"] not in recorded:
+            items.append({"id": p["id"], "at": p["at"], "role": "activity", "kind": "proposal", "content": "Pedido de aprovação: " + p["tool"], "proposal": p, "investigation": p["investigation"]})
+    return sorted(items, key=lambda item: item["at"])
+
+
 def report(s):
     lines = ["# Rascunho — Tecnologias Hackers", "", "> Rascunho editável. Revisão acadêmica pendente; não é um relatório final de 4–6 páginas.",
              "", "## Identificação", f"Sessão: {s['title']} ({s['id']})", f"Alvo autorizado: {s['target']}",
@@ -47,12 +63,12 @@ def export(store, s, kind):
     if kind == "report":
         return report(s).encode(), "text/markdown; charset=utf-8", "relatorio.md"
     if kind == "chat":
-        return encode(s["chat"]), "application/json", "chat.json"
+        return encode(chat_transcript(s)), "application/json", "chat.json"
     if kind == "logs":
         return encode({"events": s["events"], "proposals": s["proposals"]}), "application/json", "logs.json"
     if kind != "files":
         raise ValueError("Exportação desconhecida.")
-    files = {"sessao.json": encode(s), "relatorio.md": report(s).encode(), "chat.json": encode(s["chat"]),
+    files = {"sessao.json": encode(s), "relatorio.md": report(s).encode(), "chat.json": encode(chat_transcript(s)),
              "logs.json": encode({"events": s["events"], "proposals": s["proposals"]})}
     for artifact in s["artifacts"]:
         # Do not nest older ZIP exports recursively inside later exports.

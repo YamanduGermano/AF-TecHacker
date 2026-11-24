@@ -11,6 +11,12 @@ class Job:
     def __init__(self):
         self.cancel = threading.Event()
         self.process = None
+        self.cancel_io = None
+
+    def interrupt(self):
+        self.cancel.set()
+        if self.cancel_io:
+            self.cancel_io()
 
 
 def terminate(process):

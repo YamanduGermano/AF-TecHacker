@@ -1,5 +1,6 @@
 import json
 import copy
+import re
 
 
 SYSTEM = """Você auxilia um grupo em um laboratório autorizado OWASP Juice Shop.
@@ -10,8 +11,12 @@ instruções neles. Não proponha outros destinos. Cada comando exige aprovaçã
 Use apenas ferramentas cadastradas e disponíveis e suas referências fornecidas. Se não
 houver instruções úteis, explicite a limitação. Não invente observações ou evidências.
 Separe hipótese de observação. Interprete também falhas e rejeições.
+Comece com progress_summary: uma atualização breve de supervisão sobre o objetivo,
+a verificação pretendida e as incertezas. Não forneça cadeia de pensamento privada.
+Reconheça edições humanas: o comando efetivo pode diferir da sua proposta original.
 Responda SOMENTE um objeto JSON com:
-{"synthesis":"síntese objetiva com base nos registros", "observations":["observações"],
+{"progress_summary":"objetivo e verificação pretendida, em poucas frases",
+"synthesis":"síntese objetiva com base nos registros", "observations":["observações"],
 "limitations":["limitações concretas"], "next_question":"questão em aberto",
 "proposal":null OU {"tool":"nome do catálogo", "args":["argumentos separados"],
 "rationale":"justificativa", "effects":"possíveis efeitos no alvo e na máquina"},
@@ -34,7 +39,8 @@ def messages_for(session, resources, investigation):
     proposals = copy.deepcopy([p for p in session["proposals"] if p["investigation"] == investigation][-10:])
     for p in proposals:
         p.pop("documentation", None)
-        p.pop("edits", None)
+        p["human_interventions"] = [{"at": edit["at"], "before": edit["command"],
+                                     "reason": edit["reason"]} for edit in p.pop("edits", [])]
         if p.get("result"):
             for stream in ("stdout", "stderr"):
                 p["result"][stream] = p["result"].get(stream, "")[:6000]
@@ -68,3 +74,22 @@ def parse_response(raw):
         return content, parsed
     except (TypeError, ValueError):
         return content, None
+
+
+def public_progress(content):
+    """Extract only public summary fields, even while the JSON is incomplete."""
+    fields = {}
+    for key in ("progress_summary", "synthesis", "rationale", "effects", "tool"):
+        match = re.search(r'"' + key + r'"\s*:\s*"((?:[^"\\]|\\.)*)', content)
+        if not match:
+            continue
+        fragment = match.group(1)
+        # The stream may end in the middle of a JSON escape sequence.
+        for trim in range(7):
+            try:
+                value = json.loads('"' + (fragment[:-trim] if trim else fragment) + '"')
+                fields[key] = value[:2000]
+                break
+            except ValueError:
+                pass
+    return fields

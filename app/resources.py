@@ -1,8 +1,12 @@
 import copy
+import hashlib
+import http.client
 import json
 import os
 import re
 import shutil
+import socket
+import threading
 from pathlib import Path
 from urllib.request import Request, build_opener, ProxyHandler, HTTPRedirectHandler
 from urllib.parse import urlsplit
@@ -30,9 +34,11 @@ def executable(name):
         return None
     path = str(Path(path).resolve())
     stat = Path(path).stat()
+    hasher = hashlib.sha256()
     with open(path, "rb") as f:
-        import hashlib
-        sha = hashlib.file_digest(f, "sha256").hexdigest()
+        for chunk in iter(lambda: f.read(1024 * 1024), b""):
+            hasher.update(chunk)
+    sha = hasher.hexdigest()
     return {"path": path, "sha256": sha, "size": stat.st_size, "mtime_ns": stat.st_mtime_ns}
 
 
@@ -79,6 +85,84 @@ class Resources:
             self.checked_at = now()
             self.save()
             return self.snapshot()
+
+    def stream_chat(self, payload, job, on_content, timeout=180):
+        """NDJSON streaming; closing the socket interrupts blocked reads immediately."""
+        parsed = urlsplit(self.url)
+        connection = http.client.HTTPConnection(parsed.hostname, parsed.port or 80, timeout=5)
+        pieces = []
+        complete = False
+        deadline_hit = threading.Event()
+        timer = None
+        response = None
+        try:
+            if job.cancel.is_set():
+                return {"message": {"content": ""}}
+            connection.connect()
+            sock = connection.sock
+
+            def disconnect():
+                try:
+                    sock.shutdown(socket.SHUT_RDWR)
+                except OSError:
+                    pass
+
+            job.cancel_io = disconnect
+            if job.cancel.is_set():
+                disconnect()
+                return {"message": {"content": ""}}
+            sock.settimeout(timeout)
+
+            def expire():
+                deadline_hit.set()
+                disconnect()
+
+            timer = threading.Timer(timeout, expire)
+            timer.daemon = True
+            timer.start()
+            body = json.dumps({**payload, "stream": True}).encode()
+            connection.request("POST", "/api/chat", body=body, headers={"Content-Type": "application/json"})
+            response = connection.getresponse()
+            if response.status != 200:
+                raise ValueError("Ollama retornou HTTP " + str(response.status) + ": " + response.read(1000).decode(errors="replace"))
+            total = 0
+            while not job.cancel.is_set():
+                line = response.readline(262145)
+                if job.cancel.is_set():
+                    break
+                if deadline_hit.is_set():
+                    raise ValueError("Tempo limite do modelo atingido.")
+                if not line:
+                    break
+                total += len(line)
+                if len(line) > 262144 or total > 2_000_000:
+                    raise ValueError("Resposta do Ollama excedeu o limite.")
+                chunk = json.loads(line)
+                if chunk.get("error"):
+                    raise ValueError(str(chunk["error"]))
+                # Only public answer content is used. Private reasoning fields are ignored.
+                content = chunk.get("message", {}).get("content", "")
+                if not isinstance(content, str):
+                    raise ValueError("Conteúdo de resposta inválido.")
+                if content:
+                    pieces.append(content)
+                    on_content("".join(pieces))
+                if chunk.get("done"):
+                    complete = True
+                    break
+            if not job.cancel.is_set() and not complete:
+                raise ValueError("Tempo limite do modelo atingido." if deadline_hit.is_set() else "Fluxo do modelo terminou antes de concluir a resposta.")
+        except (OSError, http.client.HTTPException):
+            if not job.cancel.is_set():
+                raise ValueError("Tempo limite do modelo atingido." if deadline_hit.is_set() else "Conexão com o Ollama interrompida.")
+        finally:
+            if timer:
+                timer.cancel()
+            job.cancel_io = None
+            if response:
+                response.close()
+            connection.close()
+        return {"message": {"content": "".join(pieces)}}
 
     def snapshot(self):
         return copy.deepcopy({"tools": self.catalog, "models": self.models, "checked_at": self.checked_at, "error": self.error, "ollama_url": self.url})

@@ -65,13 +65,16 @@ def handler_for(service, port):
                         s = service.store.get(parts[2])
                         if len(parts) == 3:
                             return self.send(200, s)
+                        if len(parts) == 5 and parts[3] == "preview" and parts[4] in ("logs", "chat", "report"):
+                            data, _, filename = reports.export(service.store, s, parts[4])
+                            return self.send(200, {"name": filename, "content": data[:262144].decode("utf-8", errors="replace"), "truncated": len(data) > 262144, "bytes": len(data), "origin": "Registros atuais da sessão"})
                         if len(parts) == 5 and parts[3] == "export":
                             data, mime, filename = reports.export(service.store, s, parts[4])
                             artifact = service.store.artifact(s, filename, data, "exportação " + parts[4])
                             service.store.event(s, "export", "Exportação gerada: " + filename, artifact_id=artifact["id"])
                             service.store.save(s)
                             return self.send(200, data, mime, filename, artifact)
-                        if len(parts) == 5 and parts[3] == "artifacts":
+                        if len(parts) in (5, 6) and parts[3] == "artifacts":
                             a = next((a for a in s["artifacts"] if a["id"] == parts[4]), None)
                             if not a:
                                 raise ValueError("Arquivo não encontrado.")
@@ -80,6 +83,19 @@ def handler_for(service, port):
                             data = file.read_bytes()
                             if digest(data) != a["sha256"]:
                                 raise ValueError("Arquivo alterado: hash divergente.")
+                            if len(parts) == 6:
+                                if parts[5] != "view":
+                                    raise ValueError("Visualização desconhecida.")
+                                if a["name"].endswith(".zip"):
+                                    import io
+                                    import zipfile
+                                    with zipfile.ZipFile(io.BytesIO(data)) as archive:
+                                        entries = archive.infolist()
+                                        content = "Conteúdo do pacote ZIP:\n\n" + "\n".join(f"{item.filename} ({item.file_size} bytes)" for item in entries[:200])
+                                    return self.send(200, {**a, "content": content, "truncated": len(entries) > 200})
+                                snippet = data[:262144]
+                                binary = b"\x00" in snippet
+                                return self.send(200, {**a, "content": "Arquivo binário. Use o download para abrir no aplicativo apropriado." if binary else snippet.decode("utf-8", errors="replace"), "truncated": len(data) > len(snippet), "binary": binary})
                             return self.send(200, data, "application/octet-stream", a["name"])
                 if path in ("/", "/index.html", "/styles.css", "/app.js", "/favicon.svg"):
                     file = STATIC / ("index.html" if path == "/" else path.lstrip("/"))

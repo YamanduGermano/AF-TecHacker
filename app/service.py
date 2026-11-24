@@ -2,6 +2,7 @@ import copy
 import json
 import shlex
 import threading
+import time
 
 from . import agent
 from .executor import Job, run
@@ -38,6 +39,8 @@ class Service:
             session = self.store.get(item["id"])
             if session["status"] in ("thinking", "running", "stopping"):
                 session["status"] = "paused"
+                if session.get("model_progress"):
+                    session["model_progress"]["status"] = "interrupted"
                 for p in session["proposals"]:
                     if p["status"] == "running":
                         p["status"] = "interrupted"
@@ -109,6 +112,20 @@ class Service:
         return s
 
     def _model(self, sid, index, job):
+        partial_content = ""
+        last_update = 0
+
+        def on_content(content):
+            nonlocal partial_content, last_update
+            partial_content = content
+            if job.cancel.is_set() or time.monotonic() - last_update < 0.3:
+                return
+            last_update = time.monotonic()
+            with self.store.lock:
+                current = self.store.get(sid)
+                current["model_progress"].update(status="streaming", fields=agent.public_progress(content), updated_at=now())
+                self.store.save(current)
+
         try:
             with self.store.lock:
                 s = self.store.get(sid)
@@ -118,13 +135,16 @@ class Service:
                 messages = agent.messages_for(s, resources, index)
                 artifact = self.store.artifact(s, "contexto-modelo.json", encode({"model": s["model"], "messages": messages}), "contexto exato enviado ao Ollama")
                 self.store.event(s, "model", "Contexto enviado ao modelo.", artifact_id=artifact["id"], investigation=index)
+                s["model_progress"] = {"status": "waiting", "investigation": index, "fields": {}, "started_at": now(), "updated_at": now()}
                 self.store.save(s)
-            response = self.resources.request("/api/chat", {"model": s["model"], "messages": messages, "stream": False,
-                                                          "format": "json", "options": {"temperature": 0.2, "num_predict": 4096}}, timeout=180)
+            response = self.resources.stream_chat({"model": s["model"], "messages": messages,
+                                                   "think": False, "format": "json",
+                                                   "options": {"temperature": 0.2, "num_predict": 4096}}, job, on_content, timeout=180)
             raw, parsed = agent.parse_response(response)
             with self.store.lock:
                 s = self.store.get(sid)
                 s["chat"].append({"id": uid(), "at": now(), "role": "assistant", "content": raw, "investigation": index, "discarded": job.cancel.is_set()})
+                s["model_progress"].update(status="interrupted" if job.cancel.is_set() else "completed", fields=agent.public_progress(raw), updated_at=now())
                 if job.cancel.is_set():
                     self.store.event(s, "interrupted", "Resposta tardia do modelo arquivada, sem criar propostas.")
                 elif parsed is None:
@@ -136,7 +156,9 @@ class Service:
                     s["investigations"][index]["syntheses"].append(synthesis)
                     if parsed.get("proposal") is not None:
                         try:
-                            s["proposals"].append(self.make_proposal(s, parsed["proposal"], index))
+                            proposal = self.make_proposal(s, parsed["proposal"], index)
+                            s["proposals"].append(proposal)
+                            self.store.event(s, "proposal", "Aprovação pendente: " + proposal["tool"], proposal_id=proposal["id"], investigation=index)
                         except (ValueError, TypeError, AttributeError) as exc:
                             self.store.event(s, "error", "Proposta recusada pelo validador: " + str(exc))
                     rev = parsed.get("plan_revision")
@@ -152,7 +174,11 @@ class Service:
             with self.store.lock:
                 s = self.store.get(sid)
                 s["status"] = "paused" if job.cancel.is_set() else "idle"
-                self.store.event(s, "error", "Falha ao consultar o modelo: " + str(exc)[:500], investigation=index)
+                if partial_content:
+                    s["chat"].append({"id": uid(), "at": now(), "role": "assistant", "content": partial_content, "investigation": index, "discarded": True, "incomplete": True})
+                if s.get("model_progress"):
+                    s["model_progress"].update(status="interrupted" if job.cancel.is_set() else "failed", fields=agent.public_progress(partial_content), updated_at=now())
+                self.store.event(s, "interrupted" if job.cancel.is_set() else "error", "Análise interrompida pelo usuário." if job.cancel.is_set() else "Falha ao consultar o modelo: " + str(exc)[:500], investigation=index)
                 self.store.save(s)
         finally:
             with self.store.lock:
@@ -172,6 +198,9 @@ class Service:
             if data.get("revision") != p["revision"]:
                 raise ValueError("A proposta mudou. Reabra e confira o comando final.")
             reason = text(data.get("reason", ""), 4000)
+            if action == "preview":
+                candidate = self.preview_command(s, p, data)
+                return {**candidate, "id": p["id"], "revision": p["revision"]}
             if action == "edit":
                 if not reason:
                     raise ValueError("Registre o motivo da edição.")
@@ -182,8 +211,7 @@ class Service:
                 p["revision"] += 1
                 self.store.event(s, "edited", "Comando editado; nova aprovação é obrigatória.", proposal_id=pid)
             elif action == "reject":
-                if not reason:
-                    raise ValueError("Registre o motivo da rejeição.")
+                reason = reason or "Rejeitado pelo usuário, sem justificativa adicional."
                 p.update(status="rejected", decision={"at": now(), "action": "rejected", "reason": reason})
                 self.store.event(s, "rejected", reason, proposal_id=pid)
             elif action == "approve":
@@ -191,15 +219,29 @@ class Service:
                     raise ValueError("Confirme a revisão do comando final.")
                 if sid in self.jobs:
                     raise ValueError("Há uma atividade em andamento.")
-                self.resources.get(p["tool"])
-                current = executable(p["tool"])
-                if current != p["resolved"]:
+                candidate = self.preview_command(s, p, data) if "command" in data else p
+                if "command" in data and (data.get("expected_command") != candidate["command"] or data.get("expected_resolved") != candidate["resolved"]):
+                    raise ValueError("A prévia mudou. Confira o comando atualizado antes de aprovar.")
+                self.resources.get(candidate["tool"])
+                current = executable(candidate["tool"])
+                expected = p["resolved"] if candidate["tool"] == p["tool"] else candidate["resolved"]
+                if current != expected:
                     p["status"] = "suspended"
                     self.store.event(s, "suspended", "Executável mudou ou desapareceu; solicite uma nova proposta.", proposal_id=pid)
                     self.store.save(s)
                     raise ValueError("Caminho ou conteúdo do executável mudou. Ação suspensa.")
                 if s["actions"] >= s["limits"]["max_actions"]:
                     raise ValueError("Limite de ações da sessão atingido.")
+                if candidate["tool"] != p["tool"] or candidate["args"] != p["args"]:
+                    edit_reason = reason or "Comando alterado pelo usuário antes da aprovação."
+                    p["edits"].append({"at": now(), "command": p["command"], "tool": p["tool"], "args": p["args"], "resolved": p["resolved"], "documentation": p["documentation"], "reason": edit_reason})
+                    before = p["command"]
+                    for key in ("tool", "args", "resolved", "documentation", "tool_description", "command", "destinations"):
+                        p[key] = candidate[key]
+                    p["revision"] += 1
+                    p["human_edited"] = True
+                    self.store.event(s, "edited", "Comando alterado pelo usuário antes da aprovação.", proposal_id=pid, investigation=p["investigation"], before=before, after=p["command"])
+                    s["chat"].append({"id": uid(), "at": now(), "role": "user", "origin": "command_edit", "investigation": p["investigation"], "content": "Intervenção humana na proposta " + pid + ": o usuário alterou o comando de " + before + " para " + p["command"] + ". Motivo: " + edit_reason + " Considere o comando efetivamente executado ao interpretar o resultado."})
                 p.update(status="running", decision={"at": now(), "action": "approved", "reason": reason or "Comando final revisado e autorizado individualmente.", "revision": p["revision"], "command": p["command"]})
                 s["status"] = "running"
                 s["actions"] += 1
@@ -213,6 +255,17 @@ class Service:
                 raise ValueError("Decisão inválida.")
             self.store.save(s)
             return s
+
+    def preview_command(self, s, proposal, data):
+        name = text(data.get("tool", proposal["tool"]), 80)
+        self.resources.get(name)
+        resolved = executable(name)
+        if not resolved:
+            raise ValueError("Ferramenta indisponível.")
+        tokens = shlex.split(text(data.get("command", ""), 24000))
+        if not tokens or tokens[0] not in (name, resolved["path"]):
+            raise ValueError("Para trocar o executável, selecione-o no campo Ferramenta. Edite os argumentos na linha de comando.")
+        return self.make_proposal(s, {"tool": name, "args": tokens[1:], "rationale": proposal["rationale"], "effects": proposal["effects"]}, proposal["investigation"])
 
     def _execute(self, sid, pid, job):
         try:
@@ -273,7 +326,7 @@ class Service:
             s = self.store.get(sid)
             job = self.jobs.get(sid)
             if job:
-                job.cancel.set()
+                job.interrupt()
             s["status"] = "stopping" if job else "paused"
             self.store.event(s, "stop", "Interrupção solicitada pelo usuário.")
             self.store.save(s)
