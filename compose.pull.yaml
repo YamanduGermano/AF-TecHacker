@@ -1,0 +1,18 @@
+# Uso pontual para BAIXAR um modelo (precisa de internet):
+#   docker compose -f compose.yaml -f compose.pull.yaml run --rm ollama-pull ollama pull <modelo>
+# O serviço roda só durante o comando; o armazenamento é o mesmo volume persistente (dados/modelos/ollama).
+services:
+  ollama-pull:
+    image: ollama/ollama:${OLLAMA_VERSION:-latest}
+    user: "${PLATAFORMA_UID:-1000}:${PLATAFORMA_GID:-1000}"
+    environment:
+      OLLAMA_MODELS: /modelos/ollama
+      HOME: /tmp
+    entrypoint: []
+    volumes:
+      - ./dados/modelos/ollama:/modelos/ollama
+    tmpfs: [/tmp]
+    networks: [rede_saida]
+    profiles: ["pull"]
+networks:
+  rede_saida: {}

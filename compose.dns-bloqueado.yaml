@@ -1,0 +1,6 @@
+# OPCIONAL (endurecimento): impede que o executor resolva nomes externos (o resolvedor embutido do Docker
+# não passa pelo firewall do host). Com isso, use o ENDEREÇO IP no modo "LAN" (ex.: http://192.168.1.50:3000/).
+#   docker compose -f compose.yaml -f compose.dns-bloqueado.yaml up -d
+services:
+  executor:
+    dns: ["192.0.2.1"]   # TEST-NET-1: inalcançável por definição

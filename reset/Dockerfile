@@ -1,0 +1,7 @@
+FROM python:3.12-slim
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+WORKDIR /app
+COPY reset_service.py .
+USER 10001
+EXPOSE 9000
+CMD ["python", "reset_service.py"]

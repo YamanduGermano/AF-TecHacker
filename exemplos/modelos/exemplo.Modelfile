@@ -1,0 +1,8 @@
+# Exemplo de Modelfile para importar um GGUF local.
+# 1) Copie seu arquivo para dados/modelos/importar/meu-modelo.gguf
+# 2) Salve este arquivo ao lado dele como dados/modelos/importar/meu-modelo.Modelfile (mesmo nome-base)
+# 3) A linha FROM deve apontar para o MESMO arquivo .gguf; a plataforma recusa outro caminho.
+# 4) Clique em «Verificar novos recursos» e depois em «Importar» no catálogo de modelos.
+FROM meu-modelo.gguf
+PARAMETER temperature 0.2
+PARAMETER num_ctx 8192

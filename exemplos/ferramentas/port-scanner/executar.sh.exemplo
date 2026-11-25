@@ -1,0 +1,6 @@
+#!/bin/sh
+# Exemplo de invólucro. Renomeie para executar.sh, copie para dados/ferramentas/port-scanner/ e rode chmod 755.
+# Requer que o nmap exista dentro do contêiner do executor (ex.: EXECUTOR_EXTRA_APT=nmap no .env, depois
+# docker compose build executor) — ou substitua este arquivo por um binário estático do nmap.
+# O hash SHA-256 registrado na habilitação é o DESTE arquivo; o binário chamado por ele não é verificado.
+exec /usr/bin/nmap "$@"

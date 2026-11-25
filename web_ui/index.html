@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Agente supervisionado — laboratório Juice Shop</title>
+  <link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+  <header id="topo">
+    <h1>Agente supervisionado <small>laboratório OWASP Juice Shop</small></h1>
+    <div class="barra">
+      <label>Operador <input id="operador" maxlength="60" placeholder="seu nome"></label>
+      <span id="chip-ollama" class="chip">Ollama…</span>
+      <span id="chip-executor" class="chip">Executor…</span>
+      <button id="btn-varrer" class="primario">Verificar novos recursos</button>
+      <button id="btn-egress">Verificar saída de rede</button>
+    </div>
+  </header>
+  <div id="aviso" role="status" hidden></div>
+
+  <main>
+    <aside id="coluna-recursos">
+      <section class="painel" id="painel-varredura"><h2>Última varredura</h2><div id="varredura">—</div></section>
+
+      <section class="painel"><h2>Modelos</h2>
+        <div id="modelos-vazio" class="vazio" hidden></div>
+        <table id="tabela-modelos"><thead><tr><th>Modelo</th><th>Estado</th><th>Versão</th><th></th></tr></thead><tbody></tbody></table>
+      </section>
+
+      <section class="painel"><h2>Ferramentas</h2>
+        <div id="ferramentas-vazio" class="vazio" hidden></div>
+        <div id="lista-ferramentas"></div>
+      </section>
+
+      <section class="painel"><h2>Saída de rede do executor</h2><div id="egress">Nunca verificada.</div></section>
+
+      <section class="painel"><h2>Sessões</h2>
+        <ul id="lista-sessoes" class="lista"></ul>
+        <button id="btn-nova-sessao">Nova sessão</button>
+      </section>
+    </aside>
+
+    <section id="coluna-principal">
+      <div id="nova-sessao" class="painel" hidden>
+        <h2>Nova sessão</h2>
+        <div class="linha">
+          <label><input type="radio" name="modo" value="lan" checked> Usar Juice Shop da LAN</label>
+          <label><input type="radio" name="modo" value="local"> Iniciar Juice Shop local (perfil <code>local</code> do compose)</label>
+        </div>
+        <label id="rotulo-url">URL completa do Juice Shop <input id="ns-url" placeholder="http://192.168.1.50:3000/"></label>
+        <label class="check"><input type="checkbox" id="ns-confirma"> Confirmo que esta é uma instância <b>autorizada</b> para os testes (não autoriza outros equipamentos, serviços externos ou outros alvos).</label>
+        <label>Portas adicionais autorizadas para varredura <small>(opcional, separadas por vírgula; a porta da URL já é autorizada)</small> <input id="ns-portas" placeholder="ex.: 443"></label>
+        <label>Nome da sessão <input id="ns-nome" maxlength="120"></label>
+        <label>Objetivo <textarea id="ns-objetivo" rows="3" maxlength="2000"></textarea></label>
+        <div class="linha"><button id="ns-validar">Validar alvo</button><button id="ns-criar" class="primario">Criar sessão</button><button id="ns-cancelar">Cancelar</button></div>
+        <pre id="ns-resultado" class="caixa" hidden></pre>
+      </div>
+
+      <div id="sessao" hidden>
+        <section class="painel" id="cabecalho-sessao"></section>
+        <section class="painel" id="faltas" hidden></section>
+
+        <section class="painel" id="painel-plano">
+          <h2>Plano humano <small>(obrigatório antes de consultar o modelo)</small></h2>
+          <div id="plano-info" class="discreto"></div>
+          <div class="grade2" id="plano-form"></div>
+          <div class="linha"><button id="btn-plano" class="primario">Salvar plano</button><button id="btn-consultar">Consultar modelo para revisar o plano</button></div>
+          <h3>Sugestões do modelo sobre o plano</h3>
+          <div id="sugestoes" class="vazio">Nenhuma ainda.</div>
+        </section>
+
+        <section class="painel" id="painel-investigacoes">
+          <h2>Investigações <small>(até 3)</small></h2>
+          <div id="investigacoes"></div>
+          <details id="form-investigacao"><summary>Iniciar investigação</summary>
+            <label>Título <input id="inv-titulo" maxlength="200"></label>
+            <label>Hipótese <textarea id="inv-hipotese" rows="2" maxlength="2000"></textarea></label>
+            <label>Estratégia <textarea id="inv-estrategia" rows="2" maxlength="2000"></textarea></label>
+            <p class="discreto">Antes de iniciar, restaure o Juice Shop a um estado conhecido (botão <b>Restaurar alvo</b>).</p>
+            <button id="btn-iniciar-inv" class="primario">Iniciar</button>
+          </details>
+        </section>
+
+        <section class="painel" id="painel-acao" hidden></section>
+
+        <section class="painel" id="painel-chat">
+          <h2>Chat da sessão</h2>
+          <div id="chat"></div>
+          <div class="linha"><textarea id="chat-texto" rows="2" maxlength="4000" placeholder="Mensagem para o modelo (orientações, perguntas)…"></textarea><button id="btn-enviar" class="primario">Enviar</button></div>
+        </section>
+
+        <section class="painel"><h2>Ações</h2><div id="acoes"></div><pre id="saida-acao" class="caixa" hidden></pre></section>
+        <section class="painel"><h2>Linha do tempo <small>(agrupada por investigação)</small></h2><div id="linha-tempo"></div></section>
+
+        <section class="painel" id="painel-relatorio">
+          <h2>Relatório técnico <small>(rascunho editável — nada é inventado; faltas aparecem como [PENDENTE])</small></h2>
+          <div class="linha"><button id="btn-rel-gerar">Gerar/atualizar rascunho</button><button id="btn-rel-salvar" class="primario">Salvar edição</button></div>
+          <textarea id="relatorio" rows="16" spellcheck="false"></textarea>
+        </section>
+      </div>
+
+      <div id="inicio" class="painel"><h2>Bem-vindo</h2>
+        <p>Esta plataforma coloca um modelo local para <b>propor</b> ações de teste sobre <b>uma instância autorizada do OWASP Juice Shop</b>. Nada é executado sem a sua decisão sobre cada ação, e uma afirmação do modelo não é evidência.</p>
+        <div id="guia"></div>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="dialogo"><div id="dialogo-corpo"></div><div class="linha"><button id="dialogo-ok" class="primario">Confirmar</button><button id="dialogo-cancelar">Cancelar</button></div></dialog>
+  <script src="app.js"></script>
+</body>
+</html>

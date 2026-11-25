@@ -1,0 +1,2 @@
+-r agente/requirements.txt
+pytest>=8

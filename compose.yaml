@@ -1,0 +1,158 @@
+# Plataforma de agente supervisionado — laboratório OWASP Juice Shop
+#
+#   Alvo já existente na LAN :  docker compose up -d --build
+#   Juice Shop local opcional:  docker compose --profile local up -d --build
+#
+# Somente a interface é publicada no host (127.0.0.1:8080). Ollama, agente/proxy e executor NÃO publicam portas.
+name: plataforma-juice-shop
+
+x-endurecido: &endurecido
+  restart: unless-stopped
+  init: true
+  security_opt: ["no-new-privileges:true"]
+  cap_drop: [ALL]
+
+x-usuario: &usuario
+  user: "${PLATAFORMA_UID:-1000}:${PLATAFORMA_GID:-1000}"
+
+services:
+  # ---------------------------------------------------------------- alvo local (opcional)
+  juice-shop:
+    <<: *endurecido
+    profiles: ["local"]
+    image: ${JUICE_SHOP_IMAGE:-bkimminich/juice-shop:latest}
+    container_name: juice-shop-lab          # nome fixo: é o único contêiner que o serviço de reset pode reiniciar
+    networks: [rede_alvo]
+    ports:
+      # publicado para o Kali acessar; troque JUICE_SHOP_BIND por 0.0.0.0 só se o laboratório exigir
+      - "${JUICE_SHOP_BIND:-127.0.0.1}:${JUICE_SHOP_PORTA:-3000}:3000"
+
+  juice-reset:
+    <<: *endurecido
+    profiles: ["local"]
+    build: {context: ./reset}
+    read_only: true
+    tmpfs: [/tmp]
+    group_add: ["${DOCKER_GID:-999}"]       # GID do grupo 'docker' do host (getent group docker)
+    environment:
+      ALVO_CONTAINER: juice-shop-lab
+      RESET_TOKEN: ${RESET_TOKEN:-}              # gerado por scripts/init-dados.sh; o serviço recusa iniciar sem token
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock   # SOMENTE neste serviço; ele só reinicia 'juice-shop-lab'
+    networks: [rede_interna]
+
+  # ---------------------------------------------------------------- inferência local
+  ollama:
+    <<: [*endurecido, *usuario]
+    image: ollama/ollama:${OLLAMA_VERSION:-latest}
+    environment:
+      OLLAMA_HOST: 0.0.0.0:11434
+      OLLAMA_MODELS: /modelos/ollama        # armazenamento persistente no host (dados/modelos/ollama)
+      HOME: /tmp
+    volumes:
+      - ./dados/modelos/ollama:/modelos/ollama
+    tmpfs: [/tmp]
+    networks: [rede_interna]                # sem internet e sem porta publicada
+    mem_limit: ${OLLAMA_MEM_LIMIT:-8g}
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+
+  # ---------------------------------------------------------------- executor (rede restrita)
+  executor:
+    <<: [*endurecido, *usuario]
+    build:
+      context: .
+      dockerfile: executor/Dockerfile
+      args:
+        EXTRA_APT_PACKAGES: ${EXECUTOR_EXTRA_APT:-}   # bibliotecas de execução das SUAS ferramentas (ex.: libcurl4)
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /resultados:rw,size=256m,mode=0700,uid=${PLATAFORMA_UID:-1000},gid=${PLATAFORMA_GID:-1000}   # área de resultados separada
+    environment:
+      EXECUTOR_TOKEN: ${EXECUTOR_TOKEN:?execute scripts/init-dados.sh para gerar o .env}
+      FERRAMENTAS_DIR: /dados/ferramentas
+      RESULTADOS_DIR: /resultados
+      METODOS_PERMITIDOS: ${METODOS_PERMITIDOS:-GET,HEAD}
+      PERMITIR_CORPO_REQUISICAO: ${PERMITIR_CORPO_REQUISICAO:-false}
+      PERMITIR_ALVOS_PUBLICOS: ${PERMITIR_ALVOS_PUBLICOS:-false}
+      MAX_TIMEOUT_S: ${MAX_TIMEOUT_S:-60}
+    volumes:
+      - ./dados/ferramentas:/dados/ferramentas:ro      # sem escrita; NÃO recebe modelos, banco de sessões nem documentações
+    networks:
+      rede_interna: {}                                  # canal com o agente
+      rede_alvo: {priority: 100}                        # saída para o alvo — filtrada por scripts/aplicar-egress.sh
+    pids_limit: 256
+    mem_limit: ${EXECUTOR_MEM_LIMIT:-1g}
+    cpus: ${EXECUTOR_CPUS:-2}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os,urllib.request as u;r=u.Request('http://127.0.0.1:8001/saude',headers={'X-Executor-Token':os.environ['EXECUTOR_TOKEN']});u.urlopen(r,timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+
+  # ---------------------------------------------------------------- agente: backend + proxy + armazenamento
+  agente:
+    <<: [*endurecido, *usuario]
+    build: {context: ., dockerfile: agente/Dockerfile}
+    read_only: true
+    tmpfs: [/tmp]
+    environment:
+      DADOS_DIR: /dados
+      OLLAMA_URL: http://ollama:11434
+      EXECUTOR_URL: http://executor:8001
+      EXECUTOR_TOKEN: ${EXECUTOR_TOKEN:?execute scripts/init-dados.sh para gerar o .env}
+      RESET_URL: ${RESET_URL:-}
+      RESET_TOKEN: ${RESET_TOKEN:-}
+      METODOS_PERMITIDOS: ${METODOS_PERMITIDOS:-GET,HEAD}
+      PERMITIR_CORPO_REQUISICAO: ${PERMITIR_CORPO_REQUISICAO:-false}
+      PERMITIR_ALVOS_PUBLICOS: ${PERMITIR_ALVOS_PUBLICOS:-false}
+      MAX_TIMEOUT_S: ${MAX_TIMEOUT_S:-60}
+      MAX_PASSOS_POR_INVESTIGACAO: ${MAX_PASSOS_POR_INVESTIGACAO:-25}
+      MAX_CHAMADAS_POR_MINUTO: ${MAX_CHAMADAS_POR_MINUTO:-20}
+      OLLAMA_TIMEOUT_S: ${OLLAMA_TIMEOUT_S:-600}
+      EGRESS_TESTE_BLOQUEADOS: ${EGRESS_TESTE_BLOQUEADOS:-}
+    volumes:
+      - ./dados/ferramentas:/dados/ferramentas:ro
+      - ./dados/documentacoes:/dados/documentacoes:ro
+      - ./dados/__shared__:/dados/__shared__:ro
+      - ./dados/modelos/importar:/dados/modelos/importar:ro
+      - ./dados/sessoes:/dados/sessoes
+      - ./dados/banco:/dados/banco
+    networks: [rede_interna]                # nunca oferece shell ao modelo; não tem rota para a LAN
+    depends_on:
+      executor: {condition: service_healthy}
+      ollama: {condition: service_started}
+    mem_limit: ${AGENTE_MEM_LIMIT:-1g}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as u;u.urlopen('http://127.0.0.1:8000/api/saude',timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+
+  # ---------------------------------------------------------------- interface web
+  web-ui:
+    <<: *endurecido
+    build: {context: ./web_ui}
+    read_only: true
+    tmpfs: [/tmp]
+    ports:
+      - "127.0.0.1:${UI_PORTA:-8080}:8080"  # única porta de entrada do usuário
+    networks: [rede_frontend, rede_interna]
+    depends_on:
+      agente: {condition: service_healthy}
+
+networks:
+  rede_interna:
+    internal: true                          # sem rota para fora: Ollama e agente não acessam a internet
+  rede_frontend: {}                         # só existe para publicar a porta da interface
+  rede_alvo:                                # saída do executor; sub-rede e interface fixas para as regras de firewall
+    driver: bridge
+    driver_opts:
+      com.docker.network.bridge.name: br-alvo-lab
+    ipam:
+      config:
+        - subnet: ${REDE_ALVO_SUBNET:-172.30.77.0/24}
