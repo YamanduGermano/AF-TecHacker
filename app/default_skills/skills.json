@@ -19,5 +19,77 @@
     "description": "Comparar estruturas, tipos e campos sem inventar dados ausentes.",
     "file": "interpretar-json.md",
     "source": "incluída"
+  },
+  {
+    "id": "Sistemas-operacionais",
+    "name": "Sistemas operacionais",
+    "description": "Uma ferramenta de segurança executa dentro de um sistema com identidade, estado e recursos. A análise deve seguir: observa hipótese, buscar evidências e justificar a conclusão.",
+    "created_at": "2026-11-25T00:54:24.598840+00:00",
+    "file": "Sistemas-operacionais.md",
+    "original_filename": null,
+    "source": "incluída"
+  },
+  {
+    "id": "Comunicacao-de-dados-e-analise-de-logs",
+    "name": "Comunicação de dados e análise de logs",
+    "description": "quando trabalhar com comunicação entre maquinas",
+    "created_at": "2026-11-25T00:58:12.342048+00:00",
+    "file": "Comunicacao-de-dados-e-analise-de-logs.md",
+    "original_filename": null,
+    "source": "incluída"
+  },
+  {
+    "id": "Coleta-de-informacoes-e-Nmap",
+    "name": "Coleta de informações e Nmap",
+    "description": "explorar possiveis superficies de exposicao neh",
+    "created_at": "2026-11-25T00:59:36.211369+00:00",
+    "file": "Coleta-de-informacoes-e-Nmap.md",
+    "original_filename": null,
+    "source": "incluída"
+  },
+  {
+    "id": "Reconhecendo-o-alvo-gestao-e-nuvem",
+    "name": "Reconhecendo o alvo, gestão e nuvem",
+    "description": "quando estudar conexaão com o algo utilizando base estruturada de comportamentos adversários organizada em táticas e técnicas.",
+    "created_at": "2026-11-25T01:00:52.158460+00:00",
+    "file": "Reconhecendo-o-alvo-gestao-e-nuvem.md",
+    "original_filename": null,
+    "source": "incluída"
+  },
+  {
+    "id": "Tecnicas-de-reconhecimento-web",
+    "name": "Técnicas de reconhecimento web",
+    "description": "buscar vulnerabilidades web",
+    "created_at": "2026-11-25T01:02:46.382414+00:00",
+    "file": "Tecnicas-de-reconhecimento-web.md",
+    "original_filename": null,
+    "source": "incluída"
+  },
+  {
+    "id": "Credenciais-e-armazenamento-de-senhas",
+    "name": "Credenciais e armazenamento de senhas",
+    "description": "entender onde ficam senhas e credenciais",
+    "created_at": "2026-11-25T01:03:58.467691+00:00",
+    "file": "Credenciais-e-armazenamento-de-senhas.md",
+    "original_filename": null,
+    "source": "incluída"
+  },
+  {
+    "id": "LFI-RFI-e-inclusao-de-arquivos",
+    "name": "LFI, RFI e inclusão de arquivos",
+    "description": "manipulação de arquivos",
+    "created_at": "2026-11-25T01:06:01.896674+00:00",
+    "file": "LFI-RFI-e-inclusao-de-arquivos.md",
+    "original_filename": null,
+    "source": "incluída"
+  },
+  {
+    "id": "Questoes-de-revisao-com-respostas-comentadas",
+    "name": "Questões de revisão com respostas comentadas",
+    "description": "em caso de duvida",
+    "created_at": "2026-11-25T01:07:00.209851+00:00",
+    "file": "Questoes-de-revisao-com-respostas-comentadas.md",
+    "original_filename": null,
+    "source": "incluída"
   }
 ]
