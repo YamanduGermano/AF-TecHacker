@@ -19,5 +19,86 @@
     "description": "Comparar estruturas, tipos e campos sem inventar dados ausentes.",
     "file": "interpretar-json.md",
     "source": "incluída"
+  },
+  {
+    "id": "custom-7fbff5f4ec814dfe86744cc286c9f642",
+    "name": "Sistemas operacionais",
+    "description": "Uma ferramenta de segurança executa dentro de um sistema com identidade, estado e recursos. A análise deve seguir: observa hipótese, buscar evidências e justificar a conclusão.",
+    "created_at": "2026-11-25T00:54:24.598840+00:00",
+    "file": "custom-7fbff5f4ec814dfe86744cc286c9f642-Sistemas-operacionais.md",
+    "original_filename": null,
+    "source": "importada"
+  },
+  {
+    "id": "custom-b6204f36e6cd430ba520b4087f012e54",
+    "name": "Comunicação de dados e análise de logs",
+    "description": "quando trabalhar com comunicação entre maquinas",
+    "created_at": "2026-11-25T00:58:12.342048+00:00",
+    "file": "custom-b6204f36e6cd430ba520b4087f012e54-Comunica-o-de-dados-e-an-lise-de-logs.md",
+    "original_filename": null,
+    "source": "importada"
+  },
+  {
+    "id": "custom-3d35347f1b55489b9567341b049052a4",
+    "name": "Coleta de informações e Nmap",
+    "description": "explorar possiveis superficies de exposicao neh",
+    "created_at": "2026-11-25T00:59:36.211369+00:00",
+    "file": "custom-3d35347f1b55489b9567341b049052a4-Coleta-de-informa-es-e-Nmap.md",
+    "original_filename": null,
+    "source": "importada"
+  },
+  {
+    "id": "custom-966f1185b6234180be7e5abede5ea0e3",
+    "name": "Reconhecendo o alvo, gestão e nuvem",
+    "description": "quando estudar conexaão com o algo utilizando base estruturada de comportamentos adversários organizada em táticas e técnicas.",
+    "created_at": "2026-11-25T01:00:52.158460+00:00",
+    "file": "custom-966f1185b6234180be7e5abede5ea0e3-Reconhecendo-o-alvo-gest-o-e-nuvem.md",
+    "original_filename": null,
+    "source": "importada"
+  },
+  {
+    "id": "custom-afa1f2fa034b4d1e8d44b4949b8644ec",
+    "name": "Técnicas de reconhecimento web",
+    "description": "buscar vulnerabilidades web",
+    "created_at": "2026-11-25T01:02:46.382414+00:00",
+    "file": "custom-afa1f2fa034b4d1e8d44b4949b8644ec-T-cnicas-de-reconhecimento-web.md",
+    "original_filename": null,
+    "source": "importada"
+  },
+  {
+    "id": "custom-7b72577222834349b2d18a9e7e6a1efc",
+    "name": "6. Credenciais e armazenamento de senhas",
+    "description": "entender onde ficam senhas e credenciais",
+    "created_at": "2026-11-25T01:03:58.467691+00:00",
+    "file": "custom-7b72577222834349b2d18a9e7e6a1efc-6.md",
+    "original_filename": null,
+    "source": "importada"
+  },
+  {
+    "id": "custom-9bb2b36ee6a9416eab22fa4faa3e4edc",
+    "name": "LFI, RFI e inclusão de arquivos",
+    "description": "manipulação de arquivos",
+    "created_at": "2026-11-25T01:06:01.896674+00:00",
+    "file": "custom-9bb2b36ee6a9416eab22fa4faa3e4edc-LFI-RFI-e-inclus-o-de-arquivos.md",
+    "original_filename": null,
+    "source": "importada"
+  },
+  {
+    "id": "custom-c94d77a5c0c14513bfce82d1b57f783f",
+    "name": "Correções técnicas e fontes primárias",
+    "description": "duvidas",
+    "created_at": "2026-11-25T01:06:37.838088+00:00",
+    "file": "custom-c94d77a5c0c14513bfce82d1b57f783f-Corre-es-t-cnicas-e-fontes-prim-rias.md",
+    "original_filename": null,
+    "source": "importada"
+  },
+  {
+    "id": "custom-a85e2c4f635a4d6f9c013e251620eea2",
+    "name": "Questões de revisão com respostas comentadas",
+    "description": "em caso de duvida",
+    "created_at": "2026-11-25T01:07:00.209851+00:00",
+    "file": "custom-a85e2c4f635a4d6f9c013e251620eea2-Quest-es-de-revis-o-com-respostas-comentadas.md",
+    "original_filename": null,
+    "source": "importada"
   }
 ]
