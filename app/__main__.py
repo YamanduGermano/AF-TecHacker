@@ -17,7 +17,7 @@ def main():
     args = parser.parse_args()
     if not 1 <= args.port <= 65535:
         parser.error("Porta inválida.")
-    service = Service(args.data_dir, args.ollama_url)
+    service = Service(args.data_dir, args.ollama_url, skills_dir=Path(__file__).resolve().parent.parent / "skills")
     service.resources.refresh()
     server = create_server(service, args.port)
     print(f"Laboratório aberto em http://127.0.0.1:{args.port}", flush=True)

@@ -82,5 +82,102 @@
       "reason": "completed",
       "duration": 0.006
     }
+  },
+  {
+    "id": "0f2172a4ae12401aa7cf9dd6fc57e1b5",
+    "name": "nmap",
+    "resolved": {
+      "path": "/usr/bin/nmap",
+      "sha256": "69f720eb8b2cf1117528fd3b3a9910186b9e06be0815e7a2eed3f41c53f3890f",
+      "size": 3026896,
+      "mtime_ns": 1673545255000000000
+    },
+    "command": "/usr/bin/nmap --help",
+    "at": "2026-11-24T21:37:38.473157+00:00",
+    "status": "completed",
+    "approved_at": "2026-11-24T21:37:41.596936+00:00",
+    "result": {
+      "stdout": "Nmap 7.80 ( https://nmap.org )\nUsage: nmap [Scan Type(s)] [Options] {target specification}\nTARGET SPECIFICATION:\n  Can pass hostnames, IP addresses, networks, etc.\n  Ex: scanme.nmap.org, microsoft.com/24, 192.168.0.1; 10.0.0-255.1-254\n  -iL <inputfilename>: Input from list of hosts/networks\n  -iR <num hosts>: Choose random targets\n  --exclude <host1[,host2][,host3],...>: Exclude hosts/networks\n  --excludefile <exclude_file>: Exclude list from file\nHOST DISCOVERY:\n  -sL: List Scan - simply list targets to scan\n  -sn: Ping Scan - disable port scan\n  -Pn: Treat all hosts as online -- skip host discovery\n  -PS/PA/PU/PY[portlist]: TCP SYN/ACK, UDP or SCTP discovery to given ports\n  -PE/PP/PM: ICMP echo, timestamp, and netmask request discovery probes\n  -PO[protocol list]: IP Protocol Ping\n  -n/-R: Never do DNS resolution/Always resolve [default: sometimes]\n  --dns-servers <serv1[,serv2],...>: Specify custom DNS servers\n  --system-dns: Use OS's DNS resolver\n  --traceroute: Trace hop path to each host\nSCAN TECHNIQUES:\n  -sS/sT/sA/sW/sM: TCP SYN/Connect()/ACK/Window/Maimon scans\n  -sU: UDP Scan\n  -sN/sF/sX: TCP Null, FIN, and Xmas scans\n  --scanflags <flags>: Customize TCP scan flags\n  -sI <zombie host[:probeport]>: Idle scan\n  -sY/sZ: SCTP INIT/COOKIE-ECHO scans\n  -sO: IP protocol scan\n  -b <FTP relay host>: FTP bounce scan\nPORT SPECIFICATION AND SCAN ORDER:\n  -p <port ranges>: Only scan specified ports\n    Ex: -p22; -p1-65535; -p U:53,111,137,T:21-25,80,139,8080,S:9\n  --exclude-ports <port ranges>: Exclude the specified ports from scanning\n  -F: Fast mode - Scan fewer ports than the default scan\n  -r: Scan ports consecutively - don't randomize\n  --top-ports <number>: Scan <number> most common ports\n  --port-ratio <ratio>: Scan ports more common than <ratio>\nSERVICE/VERSION DETECTION:\n  -sV: Probe open ports to determine service/version info\n  --version-intensity <level>: Set from 0 (light) to 9 (try all probes)\n  --version-light: Limit to most likely probes (intensity 2)\n  --version-all: Try every single probe (intensity 9)\n  --version-trace: Show detailed version scan activity (for debugging)\nSCRIPT SCAN:\n  -sC: equivalent to --script=default\n  --script=<Lua scripts>: <Lua scripts> is a comma separated list of\n           directories, script-files or script-categories\n  --script-args=<n1=v1,[n2=v2,...]>: provide arguments to scripts\n  --script-args-file=filename: provide NSE script args in a file\n  --script-trace: Show all data sent and received\n  --script-updatedb: Update the script database.\n  --script-help=<Lua scripts>: Show help about scripts.\n           <Lua scripts> is a comma-separated list of script-files or\n           script-categories.\nOS DETECTION:\n  -O: Enable OS detection\n  --osscan-limit: Limit OS detection to promising targets\n  --osscan-guess: Guess OS more aggressively\nTIMING AND PERFORMANCE:\n  Options which take <time> are in seconds, or append 'ms' (milliseconds),\n  's' (seconds), 'm' (minutes), or 'h' (hours) to the value (e.g. 30m).\n  -T<0-5>: Set timing template (higher is faster)\n  --min-hostgroup/max-hostgroup <size>: Parallel host scan group sizes\n  --min-parallelism/max-parallelism <numprobes>: Probe parallelization\n  --min-rtt-timeout/max-rtt-timeout/initial-rtt-timeout <time>: Specifies\n      probe round trip time.\n  --max-retries <tries>: Caps number of port scan probe retransmissions.\n  --host-timeout <time>: Give up on target after this long\n  --scan-delay/--max-scan-delay <time>: Adjust delay between probes\n  --min-rate <number>: Send packets no slower than <number> per second\n  --max-rate <number>: Send packets no faster than <number> per second\nFIREWALL/IDS EVASION AND SPOOFING:\n  -f; --mtu <val>: fragment packets (optionally w/given MTU)\n  -D <decoy1,decoy2[,ME],...>: Cloak a scan with decoys\n  -S <IP_Address>: Spoof source address\n  -e <iface>: Use specified interface\n  -g/--source-port <portnum>: Use given port number\n  --proxies <url1,[url2],...>: Relay connections through HTTP/SOCKS4 proxies\n  --data <hex string>: Append a custom payload to sent packets\n  --data-string <string>: Append a custom ASCII string to sent packets\n  --data-length <num>: Append random data to sent packets\n  --ip-options <options>: Send packets with specified ip options\n  --ttl <val>: Set IP time-to-live field\n  --spoof-mac <mac address/prefix/vendor name>: Spoof your MAC address\n  --badsum: Send packets with a bogus TCP/UDP/SCTP checksum\nOUTPUT:\n  -oN/-oX/-oS/-oG <file>: Output scan in normal, XML, s|<rIpt kIddi3,\n     and Grepable format, respectively, to the given filename.\n  -oA <basename>: Output in the three major formats at once\n  -v: Increase verbosity level (use -vv or more for greater effect)\n  -d: Increase debugging level (use -dd or more for greater effect)\n  --reason: Display the reason a port is in a particular state\n  --open: Only show open (or possibly open) ports\n  --packet-trace: Show all packets sent and received\n  --iflist: Print host interfaces and routes (for debugging)\n  --append-output: Append to rather than clobber specified output files\n  --resume <filename>: Resume an aborted scan\n  --stylesheet <path/URL>: XSL stylesheet to transform XML output to HTML\n  --webxml: Reference stylesheet from Nmap.Org for more portable XML\n  --no-stylesheet: Prevent associating of XSL stylesheet w/XML output\nMISC:\n  -6: Enable IPv6 scanning\n  -A: Enable OS detection, version detection, script scanning, and traceroute\n  --datadir <dirname>: Specify custom Nmap data file location\n  --send-eth/--send-ip: Send using raw ethernet frames or IP packets\n  --privileged: Assume that the user is fully privileged\n  --unprivileged: Assume the user lacks raw socket privileges\n  -V: Print version number\n  -h: Print this help summary page.\nEXAMPLES:\n  nmap -v -A scanme.nmap.org\n  nmap -v -sn 192.168.0.0/16 10.0.0.0/8\n  nmap -v -iR 10000 -Pn -p 80\nSEE THE MAN PAGE (https://nmap.org/book/man.html) FOR MORE OPTIONS AND EXAMPLES\n",
+      "stderr": "",
+      "exit_code": 0,
+      "reason": "completed",
+      "duration": 0.02
+    }
+  },
+  {
+    "id": "95d02f6edc7f48e0b3cf0d9d433213d1",
+    "name": "curl",
+    "resolved": {
+      "path": "/usr/bin/curl",
+      "sha256": "b1b4a0805c83790a5854ff58ed222cecebb40ce7f5daeca33878b47089e9c206",
+      "size": 260328,
+      "mtime_ns": 1787337603000000000
+    },
+    "command": "/usr/bin/curl --help",
+    "at": "2026-11-24T21:37:59.158848+00:00",
+    "status": "completed",
+    "approved_at": "2026-11-24T21:38:00.795223+00:00",
+    "result": {
+      "stdout": "Usage: curl [options...] <url>\n -d, --data <data>          HTTP POST data\n -f, --fail                 Fail silently (no output at all) on HTTP errors\n -h, --help <category>      Get help for commands\n -i, --include              Include protocol response headers in the output\n -o, --output <file>        Write to file instead of stdout\n -O, --remote-name          Write output to a file named as the remote file\n -s, --silent               Silent mode\n -T, --upload-file <file>   Transfer local FILE to destination\n -u, --user <user:password> Server user and password\n -A, --user-agent <name>    Send User-Agent <name> to server\n -v, --verbose              Make the operation more talkative\n -V, --version              Show version number and quit\n\nThis is not the full help, this menu is stripped into categories.\nUse \"--help category\" to get an overview of all categories.\nFor all options use the manual or \"--help all\".\n",
+      "stderr": "",
+      "exit_code": 0,
+      "reason": "completed",
+      "duration": 0.102
+    }
+  },
+  {
+    "id": "ba9805df1f1c4deb9615d088a82ff399",
+    "name": "ftp",
+    "resolved": {
+      "path": "/usr/bin/tnftp",
+      "sha256": "f3eac8c33d664d8f1b63b450ec1fef289285b6a42fc60690d8d388ffbb3a5f23",
+      "size": 183192,
+      "mtime_ns": 1648202475000000000
+    },
+    "command": "/usr/bin/tnftp --help",
+    "at": "2026-11-24T23:09:17.768296+00:00",
+    "status": "completed",
+    "approved_at": "2026-11-24T23:09:21.293227+00:00",
+    "result": {
+      "stdout": "",
+      "stderr": "/usr/bin/tnftp: invalid option -- '-'\nusage: tnftp [-46AadefginpRtVv] [-N NETRC] [-o OUTPUT] [-P PORT] [-q QUITTIME]\n           [-r RETRY] [-s SRCADDR] [-T DIR,MAX[,INC]] [-x XFERSIZE]\n           [[USER@]HOST [PORT]]\n           [[USER@]HOST:[PATH][/]]\n           [file:///PATH]\n           [ftp://[USER[:PASSWORD]@]HOST[:PORT]/PATH[/][;type=TYPE]]\n           [http://[USER[:PASSWORD]@]HOST[:PORT]/PATH]\n           [https://[USER[:PASSWORD]@]HOST[:PORT]/PATH]\n           ...\n       tnftp -u URL FILE ...\n       tnftp -?\n",
+      "exit_code": 1,
+      "reason": "completed",
+      "duration": 0.021
+    }
+  },
+  {
+    "id": "655cf629e9f24b6e939dd6063de5405a",
+    "name": "ftp",
+    "resolved": {
+      "path": "/usr/bin/tnftp",
+      "sha256": "f3eac8c33d664d8f1b63b450ec1fef289285b6a42fc60690d8d388ffbb3a5f23",
+      "size": 183192,
+      "mtime_ns": 1648202475000000000
+    },
+    "command": "/usr/bin/tnftp --help",
+    "at": "2026-11-25T00:17:29.477204+00:00",
+    "status": "pending"
+  },
+  {
+    "id": "fa48fe454bc348ddacd578c955113e97",
+    "name": "ftp",
+    "resolved": {
+      "path": "/usr/bin/tnftp",
+      "sha256": "f3eac8c33d664d8f1b63b450ec1fef289285b6a42fc60690d8d388ffbb3a5f23",
+      "size": 183192,
+      "mtime_ns": 1648202475000000000
+    },
+    "command": "/usr/bin/tnftp --help",
+    "at": "2026-11-25T00:37:18.244196+00:00",
+    "status": "completed",
+    "approved_at": "2026-11-25T00:37:22.633587+00:00",
+    "result": {
+      "stdout": "",
+      "stderr": "/usr/bin/tnftp: invalid option -- '-'\nusage: tnftp [-46AadefginpRtVv] [-N NETRC] [-o OUTPUT] [-P PORT] [-q QUITTIME]\n           [-r RETRY] [-s SRCADDR] [-T DIR,MAX[,INC]] [-x XFERSIZE]\n           [[USER@]HOST [PORT]]\n           [[USER@]HOST:[PATH][/]]\n           [file:///PATH]\n           [ftp://[USER[:PASSWORD]@]HOST[:PORT]/PATH[/][;type=TYPE]]\n           [http://[USER[:PASSWORD]@]HOST[:PORT]/PATH]\n           [https://[USER[:PASSWORD]@]HOST[:PORT]/PATH]\n           ...\n       tnftp -u URL FILE ...\n       tnftp -?\n",
+      "exit_code": 1,
+      "reason": "completed",
+      "duration": 0.005
+    }
   }
 ]

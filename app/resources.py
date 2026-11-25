@@ -20,10 +20,15 @@ class NoRedirect(HTTPRedirectHandler):
         return None
 
 
-def text(value, limit=12000):
-    if not isinstance(value, str) or len(value) > limit or "\x00" in value:
-        raise ValueError("Texto inválido ou maior que o limite permitido.")
-    return value.strip()
+def text(value, limit=12000, field="Texto"):
+    if not isinstance(value, str):
+        raise ValueError(f"{field}: esperado texto; recebido {type(value).__name__}.")
+    if "\x00" in value:
+        raise ValueError(f"{field}: contém um caractere nulo, que não é permitido.")
+    value = value.strip()
+    if len(value) > limit:
+        raise ValueError(f"{field}: {len(value)} caracteres; limite de {limit}.")
+    return value
 
 
 def executable(name):

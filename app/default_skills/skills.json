@@ -1,0 +1,23 @@
+[
+  {
+    "id": "interpretar-saidas",
+    "name": "Interpretar saídas de comandos",
+    "description": "Distinguir falhas de execução, observações, hipóteses e próximos testes.",
+    "file": "interpretar-saidas.md",
+    "source": "incluída"
+  },
+  {
+    "id": "interpretar-http",
+    "name": "Interpretar respostas HTTP",
+    "description": "Analisar status, cabeçalhos, redirecionamentos e conteúdo de respostas HTTP.",
+    "file": "interpretar-http.md",
+    "source": "incluída"
+  },
+  {
+    "id": "interpretar-json",
+    "name": "Interpretar JSON e dados estruturados",
+    "description": "Comparar estruturas, tipos e campos sem inventar dados ausentes.",
+    "file": "interpretar-json.md",
+    "source": "incluída"
+  }
+]

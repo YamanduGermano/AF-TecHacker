@@ -60,6 +60,9 @@ def handler_for(service, port):
                 if path == "/api/bootstrap":
                     with service.store.lock:
                         return self.send(200, {"token": csrf, "resources": service.resources.snapshot(), "sessions": service.store.list()})
+                if path == "/api/skills":
+                    with service.store.lock:
+                        return self.send(200, service.skills.catalog())
                 if len(parts) >= 3 and parts[:2] == ["api", "sessions"]:
                     with service.store.lock:
                         s = service.store.get(parts[2])
@@ -122,6 +125,9 @@ def handler_for(service, port):
                 result = None
                 if path == "/api/resources/refresh":
                     result = service.resources.refresh()
+                elif path == "/api/skills/add":
+                    with service.store.lock:
+                        result = service.skills.add(data)
                 elif path == "/api/tools/add":
                     with service.store.lock:
                         tool = service.resources.add(data.get("name"), data.get("description", ""))
@@ -153,6 +159,12 @@ def handler_for(service, port):
                             result = service.update(sid, data)
                         elif action == "restore":
                             result = service.restore(sid, data)
+                        elif action == "skills":
+                            result = service.skill_action(sid, data)
+                        elif action == "manual-preview":
+                            result = service.manual_command(sid, data)
+                        elif action == "manual-run":
+                            result = service.manual_command(sid, data, execute=True)
                     elif len(parts) == 6 and action == "proposals":
                         result = service.proposal_action(sid, parts[4], parts[5], data)
                     elif len(parts) == 5 and action == "revisions":

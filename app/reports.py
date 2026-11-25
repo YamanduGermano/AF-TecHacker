@@ -11,7 +11,7 @@ def filled(value):
 
 def chat_transcript(s):
     """Export the same conversation + execution flow visible in the chat."""
-    items = list(s["chat"])
+    items = [m for m in s["chat"] if m.get("visibility") != "internal" and m.get("origin") != "execution"]
     proposals = {p["id"]: p for p in s["proposals"]}
     for event in s["events"]:
         entry = {**event, "role": "activity", "content": event["message"]}
@@ -21,7 +21,7 @@ def chat_transcript(s):
     recorded = {e.get("proposal_id") for e in s["events"] if e["kind"] == "proposal"}
     for p in s["proposals"]:
         if p["id"] not in recorded:
-            items.append({"id": p["id"], "at": p["at"], "role": "activity", "kind": "proposal", "content": "Pedido de aprovação: " + p["tool"], "proposal": p, "investigation": p["investigation"]})
+            items.append({"id": p["id"], "at": p["at"], "role": "activity", "kind": "proposal", "content": ("Comando manual: " if p.get("origin") == "manual" else "Pedido de aprovação: ") + p["tool"], "proposal": p, "investigation": p["investigation"]})
     return sorted(items, key=lambda item: item["at"])
 
 
@@ -42,7 +42,7 @@ def report(s):
         if not proposals:
             lines.append("**PENDENTE** — Nenhum comando registrado.")
         for p in proposals:
-            lines.extend([f"- Proposta {p['id']}: `{p['command']}`", f"  Estado: {p['status']}; motivo: {p['rationale']}",
+            lines.extend([f"- {'Comando manual' if p.get('origin') == 'manual' else 'Proposta do modelo'} {p['id']}: `{p['command']}`", f"  Estado: {p['status']}; motivo: {p['rationale']}",
                           f"  Possíveis efeitos: {p['effects']}", f"  Decisão humana: {filled(p.get('decision'))}"])
             for edit in p["edits"]:
                 lines.append(f"  Edição humana: {edit['command']} — {edit['reason']}")

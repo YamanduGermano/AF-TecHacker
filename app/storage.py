@@ -2,6 +2,7 @@ import hashlib
 import json
 import os
 import re
+import shlex
 import threading
 import uuid
 from datetime import datetime, timezone
@@ -66,12 +67,22 @@ class Store:
     def event(self, session, kind, message, **extra):
         session["events"].append({"id": uid(), "at": now(), "kind": kind, "message": message, **extra})
 
-    def artifact(self, session, filename, data, origin):
+    def artifact(self, session, filename, data, origin, *, command=None, proposal_id=None):
         aid = uid()
-        name = aid[:8] + "-" + Path(filename).name
+        basename = Path(filename).name
+        if command:
+            stem = re.sub(r"[^a-zA-Z0-9._-]+", "-", Path(basename).stem).strip("-.")[:60] or "evidencia"
+            parts = shlex.split(command)
+            readable = " ".join([Path(parts[0]).name, *parts[1:]]) if parts else command
+            hint = re.sub(r"[^a-zA-Z0-9._-]+", "-", readable).strip("-.")[:110] or "comando"
+            suffix = re.sub(r"[^a-zA-Z0-9.]", "", Path(basename).suffix)[:12]
+            basename = stem + "-" + hint + suffix
+        name = aid[:8] + "-" + basename
         path = self.directory(session["id"]) / "arquivos" / name
         path.parent.mkdir(exist_ok=True)
         path.write_bytes(data)
         record = {"id": aid, "name": name, "origin": origin, "sha256": digest(data), "bytes": len(data), "at": now()}
+        if command:
+            record.update(command=command, proposal_id=proposal_id, display_name=Path(filename).name + " · " + command)
         session["artifacts"].append(record)
         return record
