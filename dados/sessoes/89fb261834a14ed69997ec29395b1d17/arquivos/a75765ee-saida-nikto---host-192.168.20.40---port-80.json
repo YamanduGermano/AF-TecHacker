@@ -1,0 +1,11 @@
+{
+  "stdout": "- Nikto v2.1.5\n---------------------------------------------------------------------------\n+ Target IP:          192.168.20.40\n+ Target Hostname:    192.168.20.40\n+ Target Port:        80\n+ Start Time:         2026-11-24 22:44:03 (GMT-3)\n---------------------------------------------------------------------------\n+ Server: No banner retrieved\n+ Server leaks inodes via ETags, header found with file /, fields: 0xW/2700 0x1a1bc9258b0 \n+ Uncommon header 'x-recruiting' found, with contents: /#/jobs\n+ Uncommon header 'feature-policy' found, with contents: payment 'self'\n+ Uncommon header 'access-control-allow-origin' found, with contents: *\n+ Uncommon header 'x-content-type-options' found, with contents: nosniff\n+ Uncommon header 'x-frame-options' found, with contents: SAMEORIGIN\n+ No CGI Directories found (use '-C all' to force check all possible dirs)\n+ File/dir '/ftp/' in robots.txt returned a non-forbidden or redirect HTTP code (200)\n+ \"robots.txt\" contains 1 entry which should be manually viewed.\n+ Uncommon header 'access-control-allow-methods' found, with contents: GET,HEAD,PUT,PATCH,POST,DELETE\n+ OSVDB-3092: /ftp/: This might be interesting...\n+ OSVDB-3092: /public/: This might be interesting...\n",
+  "stderr": "",
+  "exit_code": -9,
+  "reason": "timeout",
+  "duration": 60.046,
+  "at": "2026-11-25T01:45:03.420844+00:00",
+  "command": "/usr/bin/nikto --host 192.168.20.40 --port 80",
+  "proposal_id": "2f47e1490e334c0db4acd1de63985d81",
+  "origin": "model"
+}

@@ -1,4 +1,4 @@
-dados/sessoes/*
+# dados/sessoes/*
 app/**/__pycache__
 app/__pycache__/*
 **/__pycache__/*.pyc
